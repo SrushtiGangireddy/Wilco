@@ -1,0 +1,57 @@
+create table EQUIPMENT(
+	EquipmentID int NOT NULL IDENTITY (1,1),
+	EquipmentName VARCHAR(50),
+	EquipmentType VARCHAR(50),
+	DateOfPurchase DATE,
+	AcquisitonCose Numeric(8,2),
+	QuantityOnHand int not null,
+	MintenanceDue DATE,
+	IfRentedEquipment BIT DEFAULT 0,
+	constraint Equipment_PK primary key(EquipmentID)
+);
+
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('Excavator123', 'Excavator', '05/06/2011', 35000,1, '05/06/2018', 0);
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('Excavator125', 'Excavator', '07/06/2012', 38000,1, '07/06/2017', 0);
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('Backhoe3', 'Backhoe Loaders', '06/16/2013', 41000,1, '06/16/2017', 0);
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('Bulldozers T', 'Bulldozers', '9/06/2014', 48000,1, '09/06/2017', 0);
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('Bulldozers S', 'Bulldozers', '10/15/2014', 29000,1, '10/15/2017', 0);
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('MG250', 'Motor Graders', '03/06/2011', 28000,1, '09/06/2017', 0);
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('CL110', 'Crawler Loaders', '03/06/2011', 35000,1, '09/06/2017', 0);
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('Trenchers', 'Trenchers', '05/06/2011', 31000,1, '05/06/2017', 0);
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('Trenchers', 'Trenchers', '08/06/2011', 31000,1, '08/06/2017', 0);
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('Scrapers', 'Scrapers', '05/06/2011', 25000,1, '05/06/2018', 0);
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('DTrucks', 'Dump Trucks', '05/06/2010', 25000,1, '05/06/2018', 0);
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('DTrucks', 'Dump Trucks', '05/06/2010', 25000,1, '05/06/2018', 0);
+insert into EQUIPMENT (EquipmentName, EquipmentType, DateOfPurchase, AcquisitonCose, QuantityOnHand, MintenanceDue, IfRentedEquipment) 
+				Values ('Excavator123', 'Excavator', '05/06/2017', 8000,1, '08/06/2018', 1);
+
+
+
+CREATE TABLE EquipmentUsage(
+	EquipmentUsageID int NOT NULL IDENTITY (1,1),
+	ProjectID varchar(20) not null,
+	EquipmentID INT NOT NULL,
+	Eq_CheckInTimeStamp DATE,
+	Eq_CheckOutTimeStamp DATE,
+	Count INT,
+	EmployeeID Int,
+	constraint EquipmentUsage_PK primary key(EquipmentUsageID),
+	Constraint EquipmentUsage_Project Foreign Key (projectID) references PROJECT (ProjectID),
+	Constraint EquipmentUsage_EquipmentID Foreign Key (EquipmentID) references Equipment (EquipmentID) , 
+	Constraint EquipmentUsage_Employee Foreign Key (EmployeeID)  references Employee (EmployeeID)
+	); 
+
+	Insert into EquipmentUsage (ProjectID, EquipmentID, 	Eq_CheckInTimeStamp, Eq_CheckOutTimeStamp, Count, EmployeeID) 
+	Values ('OH-PIK-335-005', 1, '05-02-2017','05-12-2017',1,1)

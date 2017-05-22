@@ -1,0 +1,113 @@
+create database WilcoConstructionCompany;
+
+use WilcoConstructionCompany;
+
+create table EEO_CODE(
+EEO_Code int not null identity(1,1),
+EEO_Description varchar(50) not null,
+constraint EEO_CODE_PK primary key(EEO_CODE)
+);
+
+
+create table EMPLOYEE (
+	EmployeeID int not null,
+	FirstName VARCHAR(50),
+	LastName VARCHAR(50),
+	SSN VARCHAR(50),
+	Email VARCHAR(50),
+	DateOfBirth DATE,
+	Gender VARCHAR(50),
+	EEOCode int,
+	MinorityStatus VARCHAR(50),
+	MaritalStatus VARCHAR(50),
+	StreetAddress VARCHAR(50),
+	City VARCHAR(50),
+	State VARCHAR(50),
+	Zip VARCHAR(50),
+	MobileNumber VARCHAR(50),
+	constraint Employee_PK primary key(EmployeeID),
+	constraint Employee_AK unique(ssn),
+	constraint Employee_FK foreign key(EEOCode) references EEO_CODE(EEO_Code)
+);
+
+
+create table SKILL(
+SkillID int  not null identity(1,1),
+SkillCode varchar(5) not null,
+SkillName  varchar(50) null,
+SkillHourlyRate money,
+FringeBenefits money,
+constraint Skill_PK primary key(SkillID)
+);
+
+
+
+create table PROJECT(
+ProjectID varchar(20) not null,
+ProjectName varchar(50),
+ProjectSupervisorID int,
+Inspector varchar(100),
+DistanceFromUH int,
+ProjectStartDate date,
+ProjectEndDate date,
+constraint Project_PK primary key(ProjectID)
+);
+
+
+
+create table TIMESHEET(
+TimesheetID int,
+EmployeeID int,
+ProjectID varchar(20),
+SkillID int,
+CurrentDayDate date,
+CheckInTime datetime,
+CheckOutTime datetime,
+constraint Timesheet_PK primary key(TimesheetID),
+constraint Timesheet_fk1 foreign key(EmployeeID) references EMPLOYEE(EmployeeID) on delete cascade,
+constraint Timesheet_fk2 foreign key(ProjectID) references PROJECT(ProjectID) on delete cascade,
+constraint Timesheet_fk3 foreign key(SkillID) references SKILL(SkillID) on delete cascade
+);
+
+
+create table SKILL_PROJECT(
+SkillProjectID int not null identity(1,1) primary key,
+SkillID int,
+DistanceFromUH int,
+HourlyRate money,
+constraint skill_project_fk1 foreign key(SkillID) references Skill(SkillID)
+);
+
+create table IncomeTax(
+IncomeTaxID int not null identity(1,1),
+Federal float,
+StateTax float,
+SocialSecurity float
+);
+
+TRIGGERS:
+
+CREATE TRIGGER Timesheet_Employee ON TIMESHEET
+FOR UPDATE 
+AS
+IF EXISTS(SELECT TIMESHEET.EmployeeID FROM TIMESHEET,EMPLOYEE where TIMESHEET.EmployeeID <> Employee.EmployeeID)
+BEGIN
+RAISERROR(15600,-1,-1,'EmployeeID not valid')
+END;
+
+
+CREATE TRIGGER Timesheet_CheckTime_Trigger ON TIMESHEET 
+FOR INSERT 
+AS
+IF EXISTS(SELECT TIMESHEET.CheckInTime, TIMESHEET.CheckOutTime FROM TIMESHEET 
+where TIMESHEET.CheckInTime < TIMESHEET.CheckOutTime)
+BEGIN
+RAISERROR(15600,-1,-1,'Error in entering time')
+END;
+
+
+
+
+
+
+

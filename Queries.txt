@@ -1,0 +1,150 @@
+select * from SKILL_PROJECT;
+
+//Calculating the number of minutes worked by each employee on each day on each skill
+select CurrentDayDate,EmployeeID,SkillID,DATEDIFF(mi,CheckInTime,CheckOutTime) as Mins_Worked from TIMESHEET group by CurrentDayDate,EmployeeID,SkillID,DATEDIFF(mi,CheckInTime,CheckOutTime);
+
+alter table EEO_Code add MinorityStatus varchar(15);
+
+select * from EEO_Code;
+
+update EEO_Code set MinorityStatus = 'Minority' where EEO_Code in (1,2,3,4);
+
+update EEO_CODE set MinorityStatus = 'Not Minority' where EEO_Code = 5;
+
+select * from EEO_CODE;
+
+
+create view TotalHours_Worked as select Employee.EmployeeID,Employee.Gender,Employee.EEOCode,TIMESHEET.CheckInTime,TIMESHEET.CheckOutTime,datediff(hour,TIMESHEET.CheckInTime,TIMESHEET.CheckOutTime) as Total_Number_Hours_Worked,Skill.SkillID,Skill.SkillCode,EEO_CODE.MinorityStatus from EMPLOYEE join TIMESHEET on (EMPLOYEE.EmployeeID = TIMESHEET.EmployeeID) join skill on (TIMESHEET.SkillID = skill.SkillID) join EEO_CODE on (Employee.EEOCode = EEO_Code.EEO_Code);
+
+select * from TotalHours_Worked;
+
+// Detailed view of the gender and minority status of each employee in different skills and the number of hours they have worked on each day
+
+create view Detailed_Total_Hours_Worked as 
+select SkillId,SkillCode,Gender,count(Gender) as 'Male & Female Employee Count',Total_Number_Hours_Worked,count(case when Gender='Male' then 1 end) as Male_Employee_Count,MinorityStatus,count(case when Gender='Female' then 1 end) as Female_Employee_Count,count(case when MinorityStatus='Minority' then 1 end) as Minority_Employee_Count,count(case when MinorityStatus='Not Minority' then 1 end) as NonMinority_Employee_Count,count(*) as Total_Employee_Count from TotalHours_Worked Group By SkillID,SkillCode,Gender,MinorityStatus,Total_Number_Hours_Worked;
+
+select * from Detailed_Total_Hours_Worked;
+
+
+// View to display theh number of hours worked by non minority employees grouped by their gender for each skill
+
+create view NonMinority_Hours as
+select skillID,Gender,SUM(Total_Number_Hours_Worked) as Hours_Worked from Detailed_Total_Hours_Worked where MinorityStatus='Not Minority' group by SkillID,Gender;
+
+select * from NonMinority_Hours;
+
+
+// View to display the number of hours worked by minority employees grouped by their gender for each skill
+
+
+create view Minority_Hours as 
+select SkillID,Gender,SUM(Total_Number_Hours_Worked) as Hours_Worked from Detailed_Total_Hours_Worked where MinorityStatus='Minority' group by SkillID,Gender;
+
+select * from Minority_Hours;
+
+// View that displays the number of hours worked by the minority and non minority male, female employees on each skill
+
+create view Minority_NonMinority_Hours_Worked as 
+select nmin.gender as NonMinority_Gender,nmin.Hours_Worked as NonMinority_Worked_Hours, m.gender as Minority_Gender, m.Hours_Worked as Minority_Worked_Hours, m.SkillID as SkillID from NonMinority_Hours as nmin, Minority_Hours as m where m.SkillID = nmin.SkillID and m.Gender = nmin.Gender;
+
+select * from Minority_NonMinority_Hours_Worked;
+
+// View to calculate the total number of work hours
+
+
+create view Total_Work_Hours as
+select SUM(Minority_Worked_Hours) + SUM(NonMinority_Worked_Hours) as Total_Work_Hours,SkillID from Minority_NonMinority_Hours_Worked group by SkillID;
+
+select * from Total_Work_Hours;
+
+//Query that shows the minority worked hours and the total worked hours in each skill
+
+select SUM(Minority_Worked_Hours) as Minority_Work_Hours,Minority_NonMinority_Hours_Worked.SkillID,SUM(Total_Work_Hours.Total_Work_Hours) as Total_Work_Hours from Minority_NonMinority_Hours_Worked,Total_Work_Hours where Minority_NonMinority_Hours_Worked.SkillID = Total_Work_Hours.SkillID group by Minority_NonMinority_Hours_Worked.SkillID;
+
+create view Minority_Total_Work_Hours as 
+select SUM(Minority_Worked_Hours) as Minority_Work_Hours,Minority_NonMinority_Hours_Worked.SkillID,SUM(Total_Work_Hours.Total_Work_Hours) as Total_Work_Hours from Minority_NonMinority_Hours_Worked,Total_Work_Hours where Minority_NonMinority_Hours_Worked.SkillID = Total_Work_Hours.SkillID group by Minority_NonMinority_Hours_Worked.SkillID;
+
+select  * from Minority_Total_Work_Hours;
+
+//Displaying the percentage of EEOC Complaince
+
+select  * from Minority_Total_Work_Hours;
+
+select sum(Minority_Work_Hours) as Minority_Hours,AVG(Total_Work_Hours) as Average_Minority_Hours,SkillID,convert(decimal(4,2),((sum(Minority_Work_Hours)/convert(decimal(4,1),AVG(Total_Work_Hours))) * 100)) as EEOC_Percent from Minority_Total_Work_Hours group by Minority_Total_Work_Hours.SkillID;
+
+//Number of female work hours
+
+create view Female_Work_Hours as
+select convert(decimal(4,0),sum(Total_Number_Hours_Worked)) as Female_Work_Hours,SkillID from Detailed_Total_Hours_Worked where Gender='Female' group by SkillID;
+
+select * from Female_Work_Hours;
+
+select ((Female_Work_Hours/Total_Work_Hours)*100) as Female_Work_Hours_Percent,Female_Work_Hours.SkillID from Female_Work_Hours,Total_Work_Hours where Female_Work_Hours.SkillID = Total_Work_Hours.SkillID;
+
+// Creating a view for only salary details and fringe benefits
+
+create view salary as
+select s.SkillID,sp.DistanceFromUH,sp.HourlyRate,s.FringeBenefits from Skill as s,SKILL_PROJECT as sp where s.SkillID = sp.SkillID;
+
+select * from salary;
+
+//Calculating the detailed salary report for each employee that worked on different projects for each day 
+
+select P.EmployeeID,P.SkillID,P.ProjectID,P.Date,P.WorkHours,S.HourlyRate,S.FringeBenefits,(P.WorkHours*(S.HourlyRate+S.FringeBenefits)) as TotalGrossPay
+from payroll as P,salary as S where S.SkillID = P.SkillID and S.ProjectID = P.ProjectID and S.DistanceFromUH = (select DistanceFromUH from project where ProjectID = P.ProjectID);
+
+create view SkillWorkHours as 
+select p.EmployeeID,P.SkillID,P.ProjectID,sum(P.WorkHours) as TotalSkillWorkHours,S.HourlyRate,S.FringeBenefits
+from payroll as P,salary as S where P.SkillID = S.SkillID group by P.EmployeeID,P.SkillID,P.ProjectID,S.HourlyRate,S.FringeBenefits;
+
+//Total money earned by each employee on each skill in different projects at different sites
+
+create view NonMinority_Hours_Temp as
+select skillID,Gender,SUM(Total_Number_Hours_Worked) as Hours_Worked from Detailed_Total_Hours_Worked_Temp where MinorityStatus='Not Minority' group by SkillID,Gender;
+
+select * from NonMinority_Hours_Temp;
+
+
+
+
+
+create view SkillWorkHours as 
+select p.EmployeeID,P.SkillID,P.ProjectID,sum(P.WorkHours) as TotalSkillWorkHours,sum(S.HourlyRate) as HourlyRate,sum(S.FringeBenefits) as Fringe
+from payroll as P,salary as S where P.SkillID = S.SkillID group by P.EmployeeID,P.SkillID,P.ProjectID;
+
+select * from SkillWorkHours;
+
+//Total Workhours of each employee
+
+create view TotalEmployeeHours as 
+select P.EmployeeID,sum(P.WorkHours) as TotalWorkHours
+from payroll as P group by P.EmployeeID;
+
+select * from TotalEmployeeHours;
+
+//Creating EEOC Form for one project
+
+create view TotalHoursTemp as
+select Employee.EmployeeID,Employee.Gender,Employee.EEOCode,TIMESHEET.CheckInTime,TIMESHEET.CheckOutTime,datediff(hour,TIMESHEET.CheckInTime,TIMESHEET.CheckOutTime) as Total_Number_Hours_Worked,Skill.SkillID,Skill.SkillCode,EEO_CODE.MinorityStatus from EMPLOYEE join TIMESHEET on (EMPLOYEE.EmployeeID = TIMESHEET.EmployeeID) join skill on (TIMESHEET.SkillID = skill.SkillID) join EEO_CODE on (Employee.EEOCode = EEO_Code.EEO_Code)
+where DateDiff(day,TIMESHEET.CurrentDayDate,GETDATE()) <= 15 and TIMESHEET.ProjectID='OH-PIK-336-010';
+
+select * from TotalHoursTemp;
+
+
+create view Detailed_Total_Hours_Worked_Temp as 
+select SkillId,SkillCode,Gender,count(Gender) as 'Male & Female Employee Count',Total_Number_Hours_Worked,count(case when Gender='Male' then 1 end) as Male_Employee_Count,MinorityStatus,count(case when Gender='Female' then 1 end) as Female_Employee_Count,count(case when MinorityStatus='Minority' then 1 end) as Minority_Employee_Count,count(case when MinorityStatus='Not Minority' then 1 end) as NonMinority_Employee_Count,count(*) as Total_Employee_Count from TotalHoursTemp Group By SkillID,SkillCode,Gender,MinorityStatus,Total_Number_Hours_Worked;
+
+select * from Detailed_Total_Hours_Worked_Temp;
+
+create view Minority_Hours_Temp as 
+select SkillID,Gender,SUM(Total_Number_Hours_Worked) as Hours_Worked from Detailed_Total_Hours_Worked_Temp where MinorityStatus='Minority' group by SkillID,Gender;
+
+select * from Minority_Hours_Temp;
+
+create view Minority_NonMinority_Hours_Worked_Temp as 
+select nmin.gender as NonMinority_Gender,nmin.Hours_Worked as NonMinority_Worked_Hours, m.gender as Minority_Gender, m.Hours_Worked as Minority_Worked_Hours, m.SkillID as SkillID from NonMinority_Hours_Temp as nmin, Minority_Hours_Temp as m where m.SkillID = nmin.SkillID and m.Gender = nmin.Gender;
+
+select * from Minority_NonMinority_Hours_Worked_Temp;
+
+
+

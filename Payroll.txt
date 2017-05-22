@@ -1,0 +1,42 @@
+select * from SKILL_PROJECT;
+
+select * from SKILL;
+
+alter table SKILL_PROJECT add Total_Compensation money null;
+
+update SKILL_PROJECT set SKILL_PROJECT.Total_Compensation = SKILL_PROJECT.HourlyRate+SKILL.FringeBenefits
+From SKILL_PROJECT,SKILL where SKILL_PROJECT.SkillID=SKILL.SkillID;
+
+create view Employee_Work_Hours_Pay as
+select TIMESHEET.EmployeeID,Skill.SkillName,SKILL_PROJECT.HourlyRate,SKILL.FringeBenefits,SKILL_PROJECT.Total_Compensation from TIMESHEET,SKILL,SKILL_PROJECT where TIMESHEET.SkillID=SKILL.SkillID and TIMESHEET.SkillID=SKILL_PROJECT.SkillID and SKILL_PROJECT.DistanceFromUH=(select DistanceFromUH from PROJECT where PROJECT.ProjectID=TIMESHEET.ProjectID);
+
+select * from Employee_Work_Hours_Pay;
+
+create view Employee_Pay_Roll as 
+select ewh.EmployeeID,ewh.SkillName,ewh.HourlyRate,ewh.FringeBenefits,ewh.Total_Compensation,ewh.Hours_Worked,(cast(ewh.Total_Compensation as float)*cast(ewh.Hours_Worked as float)) as GrossPay from Employee_Work_Hours as ewh;
+
+select * from Employee_Pay_Roll;
+
+declare @overtime_hours int;
+declare @overtime_skill varchar(20);
+
+select top 1 @overtime_skill = epr.SkillName from Employee_Pay_Roll epr
+where epr.EmployeeID=66 order by epr.Hours_Worked desc;
+
+declare @overtime_hourly_rate money;
+select top 1 @overtime_hourly_rate = epr.HourlyRate from Employee_Pay_Roll epr
+where epr.EmployeeID=66 order by epr.Hours_Worked desc;
+
+select @overtime_hourly_rate;
+
+declare @overtime_fringe money;
+select top 1 @overtime_fringe = epr.FringeBenefits from Employee_Pay_Roll epr
+where epr.EmployeeID=66 order by epr.Hours_Worked desc;
+
+select @overtime_fringe;
+
+select epr.EmployeeID,'Labor',1.5*55.00 as Hourly_Rate,epr.FringeBenefits,((1.5*55.00)+epr.FringeBenefits) as Total_Compensation,18 as overtime_hours,((1.5*55.00)+epr.FringeBenefits)*18 as GrossOvertimePay from Employee_Pay_Roll epr where epr.EmployeeID=66 and epr.SkillName='Labor';
+
+select * from Employee_Pay_Roll where EmployeeID=66;
+
+select epr.SkillName,epr.Hours_Worked from Employee_Pay_Roll as epr where epr.EmployeeID=66;

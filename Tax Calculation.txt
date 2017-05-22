@@ -1,0 +1,19 @@
+insert into IncomeTax values(0.1,0.01,0.05);
+	
+// Calculating Federal Tax of Employee 66
+declare @federaltax money;
+select @federaltax = (sum(epr.GrossPay)*0.1) from Employee_Pay_Roll as epr where epr.EmployeeID=66;
+select @federaltax;
+
+declare @statetax money;
+select @statetax = (sum(epr.GrossPay)*0.01) from Employee_Pay_Roll as epr where epr.EmployeeID=66;
+select @statetax;
+
+declare @socialsecuritytax money;
+select @socialsecuritytax = (sum(epr.GrossPay)*0.05) from Employee_Pay_Roll as epr where epr.EmployeeID=66;
+select @socialsecuritytax;
+
+select sum(epr.GrossPay) as GrossPay from Employee_Pay_Roll as epr where epr.EmployeeID=66;
+select (sum(epr.GrossPay)-(0.1 * sum(epr.GrossPay))-(0.01*sum(epr.GrossPay))-(0.05*sum(epr.GrossPay))) as NetPay from Employee_Pay_Roll as epr where epr.EmployeeID=66;
+
+
